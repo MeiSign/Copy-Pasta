@@ -3,6 +3,7 @@ package de.meisign.copypasta
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
+import java.util.*
 
 @Controller
 class CopyPastaController {
@@ -13,9 +14,14 @@ class CopyPastaController {
         return "uploadForm"
     }
 
-//    @GetMapping("/download")
-//    fun download() =
+    @GetMapping("/download")
+    fun download(): String {
 
-//    @GetMapping("/qrcode")
-//    fun qrcode() =
+    }
+
+    @GetMapping("/qrcode")
+    fun qrcode(model: Model): String {
+        model.addAttribute("id", UUID.randomUUID().toString())
+        return "qrCode"
+    }
 }
