@@ -1,0 +1,17 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <script src="/js/qrcode.min.js"></script>
+</head>
+<body>
+
+<div id="code"></div>
+<script th:inline="javascript">
+/*<![CDATA[*/
+var uuid = /*[[${uuid}]]*/ 'default';
+/*]]>*/
+var newUrl = window.location.origin + "/download/" + uuid;
+new QRCode(document.getElementById("code"), newUrl);
+</script>
+
+</body>
+</html>

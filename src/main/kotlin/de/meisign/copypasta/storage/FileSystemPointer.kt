@@ -1,8 +1,10 @@
 package de.meisign.copypasta.storage
 
 import java.io.*
+import java.nio.file.Files
 
 class FileSystemPointer(val file: File) : FilePointer {
+
   override fun stream(): InputStream? {
     return try {
       BufferedInputStream(FileInputStream(file))
@@ -10,4 +12,6 @@ class FileSystemPointer(val file: File) : FilePointer {
       null
     }
   }
+
+  override fun length(): Long = file.length()
 }
