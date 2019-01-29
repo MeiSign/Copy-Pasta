@@ -1,9 +1,8 @@
 package de.meisign.copypasta.storage
 
-import org.springframework.http.MediaType
-import java.io.InputStream
+import java.util.UUID
 
-interface FilePointer {
-  fun stream(): InputStream?
-  fun length(): Long
+
+data class FilePointer(val uuid: UUID, val key: String) {
+  fun path(): String = "$uuid/$key"
 }

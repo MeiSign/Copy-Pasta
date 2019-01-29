@@ -1,5 +1,6 @@
 package de.meisign.copypasta.controller
 
+import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.FileStorage
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,18 +40,9 @@ class UploadControllerTest {
   @Test
   fun uploadShouldRedirectIfSuccessful() {
     val file = MockMultipartFile("file", "orig", null, "bar".toByteArray())
-    given(storage?.storeFile(file)).willReturn(UUID.fromString("0069a086-02c4-4cbc-a6d8-53730d110486"))
+    given(storage?.storeFile(file)).willReturn(FilePointer(UUID.fromString("0069a086-02c4-4cbc-a6d8-53730d110486"), "key"))
 
     mvc?.perform(MockMvcRequestBuilders.multipart("/upload").file(file))
         ?.andExpect(MockMvcResultMatchers.status().`is`(302))
-  }
-
-  @Test
-  fun uploadShouldReturn400IfUnsuccessful() {
-    val file = MockMultipartFile("file", "orig", null, "bar".toByteArray())
-    given(storage?.storeFile(file)).willReturn(null)
-
-    mvc?.perform(MockMvcRequestBuilders.multipart("/upload").file(file))
-        ?.andExpect(MockMvcResultMatchers.status().isBadRequest)
   }
 }

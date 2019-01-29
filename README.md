@@ -1,4 +1,6 @@
 # Copy Pasta
+[![Build Status](https://travis-ci.org/MeiSign/Copy-Pasta.svg?branch=master)](https://travis-ci.org/MeiSign/Copy-Pasta)
+
 This repository is first and foremost a fun project to check 
 out what Kotlin has to offer. Apart from this purpose the idea of
 copy pasta is to transfer files from you phone to your desktop without

@@ -5,15 +5,14 @@ import de.meisign.copypasta.storage.FileStorage
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.BDDMockito.given
-import org.mockito.Mock
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.test.context.junit4.SpringRunner
-import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.http.HttpHeaders.CONTENT_LENGTH
+import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.util.*
 
 
@@ -27,30 +26,16 @@ class DownloadControllerTest {
   @MockBean
   private val storage: FileStorage? = null
 
-  @Mock
-  private val filePointer: FilePointer? = null
-
   @Test
   fun controllerShouldReturn200ForCorrectUuid() {
     val uuid: UUID = UUID.randomUUID()
     val bytes = "Hello World".toByteArray()
-    val stream = "Hello World".byteInputStream()
 
-    given(storage?.findFile(uuid)).willReturn(filePointer)
-    given(filePointer?.stream()).willReturn(stream)
+    given(storage?.downloadFile(FilePointer(uuid, "key"))).willReturn(bytes)
 
-    mvc?.perform(get("/download/" + uuid.toString()))
+    mvc?.perform(get("/download/$uuid/key"))
         ?.andExpect(status().isOk)
         ?.andExpect(content().bytes(bytes))
-  }
-
-  @Test
-  fun controllerShouldReturn404ForWrongUuid() {
-    val uuid: UUID = UUID.randomUUID()
-
-    given(storage?.findFile(uuid)).willReturn(null)
-
-    mvc?.perform(get("/download/" + uuid.toString()))
-        ?.andExpect(status().isNotFound)
+        ?.andExpect(header().longValue(CONTENT_LENGTH, bytes.size.toLong()))
   }
 }
