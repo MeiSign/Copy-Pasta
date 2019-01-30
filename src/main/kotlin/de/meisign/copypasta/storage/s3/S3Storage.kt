@@ -1,16 +1,20 @@
-package de.meisign.copypasta.storage
+package de.meisign.copypasta.storage.s3
 
 import com.amazonaws.util.IOUtils
+import de.meisign.copypasta.storage.FilePointer
+import de.meisign.copypasta.storage.FileStorage
+import de.meisign.copypasta.storage.StorageException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Profile
 import org.springframework.core.io.ResourceLoader
 import org.springframework.core.io.WritableResource
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
-import java.lang.Exception
 import java.util.*
 
+@Profile("!local")
 @Component
 class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
                 @Value("\${s3.bucketName}") private val bucketName: String) : FileStorage {
@@ -23,11 +27,11 @@ class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
   fun getS3Path(pointer: FilePointer) = "s3://$bucketName/${pointer.path()}"
 
   override fun storeFile(file: MultipartFile): FilePointer {
-    val filePointer = FilePointer(UUID.randomUUID(), getFileName(file))
+    val pointer = FilePointer(UUID.randomUUID(), getFileName(file))
     val resource = try {
-      resourceLoader.getResource(getS3Path(filePointer)) as WritableResource
+      resourceLoader.getResource(getS3Path(pointer)) as WritableResource
     } catch (e: ClassCastException) {
-      fail(filePointer, "Can't cast resource to writable Resource", e)
+      fail(pointer, "Can't cast resource to writable Resource", e)
     }
 
     resource.outputStream.use { out ->
@@ -36,7 +40,7 @@ class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
       }
     }
 
-    return filePointer
+    return pointer
   }
 
   override fun downloadFile(pointer: FilePointer): ByteArray {
@@ -49,6 +53,6 @@ class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
 
   fun fail(pointer: FilePointer, message: String, e: Exception): Nothing {
     log.error("Error: $message || FilePointer: $pointer", e)
-    throw S3StorageException()
+    throw StorageException()
   }
 }

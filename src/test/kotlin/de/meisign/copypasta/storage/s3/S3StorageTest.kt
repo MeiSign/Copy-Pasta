@@ -1,5 +1,7 @@
-package de.meisign.copypasta.storage
+package de.meisign.copypasta.storage.s3
 
+import de.meisign.copypasta.storage.FilePointer
+import de.meisign.copypasta.storage.StorageException
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -16,11 +18,11 @@ import java.io.OutputStream
 import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class S3StorageTest {
+internal class S3StorageTest {
   private val resourceLoader: ResourceLoader = mock(DefaultResourceLoader::class.java)
-  private val service = S3Storage(resourceLoader, "bucketName")
   private val resource = mock(FileSystemResource::class.java)
   private val outputStream = mock(OutputStream::class.java)
+  private val service = S3Storage(resourceLoader, "bucketName")
 
   @Test
   fun getFileNameReturnsOriginalNameIfDefined() {
@@ -39,7 +41,7 @@ class S3StorageTest {
     val file = MockMultipartFile("name", "original", null, "testContent".toByteArray())
     given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(null)
 
-    assertThrows<S3StorageException> {
+    assertThrows<StorageException> {
       service.storeFile(file)
     }
   }

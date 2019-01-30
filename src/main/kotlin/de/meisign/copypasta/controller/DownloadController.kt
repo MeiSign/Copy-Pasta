@@ -13,13 +13,12 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 import java.util.*
 
-
 @RestController
 class DownloadController(@Autowired private val storage: FileStorage) {
 
   private val log = LoggerFactory.getLogger(DownloadController::class.java)
 
-  @GetMapping(value = "/download/{uuid}/{key}")
+  @GetMapping("/download/{uuid}/{key}")
   fun download(@PathVariable uuid: UUID, @PathVariable key: String): ResponseEntity<ByteArray> {
     log.info("Downloading {}/{}", uuid.toString(), key)
     val bytes = storage.downloadFile(FilePointer(uuid, key))
