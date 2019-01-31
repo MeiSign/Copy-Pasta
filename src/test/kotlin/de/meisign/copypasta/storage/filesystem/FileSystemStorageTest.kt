@@ -54,6 +54,6 @@ internal class FileSystemStorageTest {
     given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(resource)
     given(resource.inputStream).willReturn("bla".byteInputStream())
 
-    MatcherAssert.assertThat(service.downloadFile(pointer), Matchers.`is`("bla".toByteArray()))
+    MatcherAssert.assertThat(service.downloadFile(pointer).inputStream.readBytes(), Matchers.`is`("bla".toByteArray()))
   }
 }

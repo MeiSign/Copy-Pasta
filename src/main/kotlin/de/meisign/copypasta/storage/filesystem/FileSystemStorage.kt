@@ -1,14 +1,15 @@
 package de.meisign.copypasta.storage.filesystem
 
-import com.amazonaws.util.IOUtils
 import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.FileStorage
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.core.io.FileSystemResourceLoader
+import org.springframework.core.io.Resource
 import org.springframework.core.io.WritableResource
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
+import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -46,12 +47,10 @@ class FileSystemStorage(private val resourceLoader: FileSystemResourceLoader = F
     return pointer
   }
 
-  override fun downloadFile(pointer: FilePointer): ByteArray {
+  override fun downloadFile(pointer: FilePointer): Resource {
     val resource = resourceLoader.getResource(getFilePath(pointer).toString())
+    if (!resource.exists()) throw FileNotFoundException()
 
-    resource.inputStream.use {
-      log.info("Retrieving file $pointer from upload-dir")
-      return IOUtils.toByteArray(it)
-    }
+    return resource
   }
 }

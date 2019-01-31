@@ -1,5 +1,6 @@
 package de.meisign.copypasta.storage.s3
 
+import de.meisign.copypasta.storage.FileNotFoundException
 import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.StorageException
 import org.hamcrest.MatcherAssert.assertThat
@@ -58,11 +59,24 @@ internal class S3StorageTest {
   }
 
   @Test
-  fun downloadFile() {
+  fun downloadFileShouldReturnResource() {
     val pointer = FilePointer(UUID.randomUUID(), "key")
     given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(resource)
     given(resource.inputStream).willReturn("bla".byteInputStream())
+    given(resource.exists()).willReturn(true)
 
-    assertThat(service.downloadFile(pointer), `is`("bla".toByteArray()))
+    assertThat(service.downloadFile(pointer).inputStream.readBytes(), `is`("bla".toByteArray()))
+  }
+
+  @Test
+  fun downloadFileShouldThrowFileNotFoundIfFileDoesNotExist() {
+    val pointer = FilePointer(UUID.randomUUID(), "key")
+    given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(resource)
+    given(resource.inputStream).willReturn("bla".byteInputStream())
+    given(resource.exists()).willReturn(false)
+
+    assertThrows<FileNotFoundException> {
+      service.downloadFile(pointer).inputStream.readBytes()
+    }
   }
 }

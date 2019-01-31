@@ -1,6 +1,6 @@
 package de.meisign.copypasta.storage.s3
 
-import com.amazonaws.util.IOUtils
+import de.meisign.copypasta.storage.FileNotFoundException
 import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.FileStorage
 import de.meisign.copypasta.storage.StorageException
@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
+import org.springframework.core.io.Resource
 import org.springframework.core.io.ResourceLoader
 import org.springframework.core.io.WritableResource
 import org.springframework.stereotype.Component
@@ -43,12 +44,11 @@ class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
     return pointer
   }
 
-  override fun downloadFile(pointer: FilePointer): ByteArray {
+  override fun downloadFile(pointer: FilePointer): Resource {
     val resource = resourceLoader.getResource(getS3Path(pointer))
+    if (!resource.exists()) throw FileNotFoundException()
 
-    resource.inputStream.use {
-      return IOUtils.toByteArray(it)
-    }
+    return resource
   }
 
   fun fail(pointer: FilePointer, message: String, e: Exception): Nothing {
