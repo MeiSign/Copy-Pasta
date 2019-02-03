@@ -1,32 +1,31 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import Upload from './Upload.js';
+import Download from './Download.js';
 
 class App extends Component {
-  state = {};
-
-  componentDidMount() {
-      setInterval(this.hello, 250);
+  constructor(props) {
+    super(props);
+    this.state = {
+      downloadPath: null,
+    };
   }
 
-  hello = () => {
-      fetch('/api/test')
-          .then(response => response.text())
-          .then(message => {
-              this.setState({message: message});
-          });
-  };
+
+  handleUpload(pointer) {
+    const path = window.location.origin + "/download/" + pointer.uuid + "/" + pointer.key;
+    this.setState({downloadPath: path});
+  }
 
   render() {
+    const downloadPath = this.state.downloadPath;
+    let download;
+    if (downloadPath) { download = <Download downloadPath={downloadPath} /> }
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            <h1>Hi there</h1>
-            <p className="App-title">{this.state.message}</p>
-          </p>
-        </header>
+        <Upload
+          onUpload={(pointer) => this.handleUpload(pointer)}
+        />
+        {download}
       </div>
     );
   }
