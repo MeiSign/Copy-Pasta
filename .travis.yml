@@ -10,4 +10,5 @@ deploy:
   app: copy-pasta
   env: bowl
   bucket_name: elasticbeanstalk-eu-west-1-964513388326
+  bucket_path: copy-pasta
   zip_file: target/copy-pasta-0.0.1-SNAPSHOT.jar
