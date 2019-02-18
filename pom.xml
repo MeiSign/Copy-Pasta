@@ -156,7 +156,7 @@
 								<copy todir="${project.build.directory}/classes/public">
 									<fileset dir="${project.basedir}/frontend/build"/>
 								</copy>
-								<copy todir="${project.build.directory}/.ebextensions">
+								<copy todir="${project.build.directory}/classes/.ebextensions">
 									<fileset dir="${project.basedir}/.ebextensions"/>
 								</copy>
 							</target>
