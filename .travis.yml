@@ -9,5 +9,5 @@ deploy:
   region: eu-west-1
   app: copy-pasta
   env: bowl
-  bucket_name: copy-pasta-app
+  bucket_name: elasticbeanstalk-eu-west-1-964513388326
   zip_file: target/copy-pasta-0.0.1-SNAPSHOT.jar
