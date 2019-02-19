@@ -156,9 +156,21 @@
 								<copy todir="${project.build.directory}/classes/public">
 									<fileset dir="${project.basedir}/frontend/build"/>
 								</copy>
-								<copy todir="${project.build.directory}/classes/.ebextensions">
-									<fileset dir="${project.basedir}/.ebextensions"/>
-								</copy>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>add ebextensions to jar</id>
+						<phase>package</phase>
+						<configuration>
+							<target>
+								<zip destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+										 update="yes" compress="false">
+									<fileset dir="${project.basedir}/elasticbeanstalk/"/>
+								</zip>
 							</target>
 						</configuration>
 						<goals>
