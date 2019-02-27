@@ -3,4 +3,10 @@ spring.servlet.multipart.max-request-size: 10MB
 spring.http.multipart.enabled: false
 
 server.port: 5000
-s3.bucketName: copy-pasta-data
+s3:
+  bucketName: copy-pasta-data
+  pollingIntervalMs: 3000
+  pollingRetries: 20
+fs:
+  pollingIntervalMs: 3000
+  pollingRetries: 20
