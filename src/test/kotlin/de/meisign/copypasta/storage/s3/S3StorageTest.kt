@@ -51,7 +51,7 @@ internal class S3StorageTest {
     given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(null)
 
     assertThrows<StorageException> {
-      service.storeFile(file)
+      service.storeFile(file, UUID.randomUUID())
     }
   }
 
@@ -60,7 +60,7 @@ internal class S3StorageTest {
     val file = MockMultipartFile("name", "original", null, "testContent".toByteArray())
     given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(resource)
     given(resource.outputStream).willReturn(outputStream)
-    val pointer = service.storeFile(file)
+    val pointer = service.storeFile(file, UUID.randomUUID())
 
     verify(outputStream, times(1)).write("testContent".toByteArray().copyOf(DEFAULT_BUFFER_SIZE), 0, 11)
     assertThat(pointer.key, `is`("original"))

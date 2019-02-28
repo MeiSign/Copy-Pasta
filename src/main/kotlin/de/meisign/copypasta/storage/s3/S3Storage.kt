@@ -36,8 +36,8 @@ class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
 
   fun getS3Path(pointer: FilePointer) = "s3://$bucketName/${pointer.path()}"
 
-  override fun storeFile(file: MultipartFile): FilePointer {
-    val pointer = FilePointer(UUID.randomUUID(), getFileName(file))
+  override fun storeFile(file: MultipartFile, uuid: UUID): FilePointer {
+    val pointer = FilePointer(uuid, getFileName(file))
     val resource = try {
       resourceLoader.getResource(getS3Path(pointer)) as WritableResource
     } catch (e: ClassCastException) {
@@ -46,6 +46,7 @@ class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
 
     resource.outputStream.use { out ->
       file.inputStream.use {
+        log.info("Storing file $pointer to s3")
         it.copyTo(out)
       }
     }
@@ -76,8 +77,8 @@ class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
     for (i in 1..pollingRetries) {
       log.info("[Try $i][$uuid] Listing Bucket content")
       val list = amazonS3.listObjects(bucketName, uuid.toString()).objectSummaries
-      if (list.size > 3) throw StorageException()
-      if (list.size == 2) {
+      if (list.size > 2) throw StorageException("Ambigious uuid. More than one file find.")
+      if (list.size >= 1) {
         log.info("[Try $i][$uuid] Bucket folder and file found")
         val key: String? = list.find { it.size != 0L }?.key
         if (key == null) throw FileNotFoundException()

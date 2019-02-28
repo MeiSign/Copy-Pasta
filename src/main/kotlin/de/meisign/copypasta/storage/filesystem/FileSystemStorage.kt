@@ -40,8 +40,8 @@ class FileSystemStorage(@Autowired val fileSystemStorageLoader: FileSystemStorag
           .resolve(pointer.uuid.toString())
           .resolve(pointer.key)
 
-  override fun storeFile(file: MultipartFile): FilePointer {
-    val pointer = FilePointer(UUID.randomUUID(), getFileName(file))
+  override fun storeFile(file: MultipartFile, uuid: UUID): FilePointer {
+    val pointer = FilePointer(uuid, getFileName(file))
     if (!fileSystemStorageLoader.getResource(getFilePath(pointer).parent).exists())
       Files.createDirectories(rootLocation.resolve(pointer.uuid.toString()))
     val resource = fileSystemStorageLoader.getResource(getFilePath(pointer)) as WritableResource
@@ -72,10 +72,9 @@ class FileSystemStorage(@Autowired val fileSystemStorageLoader: FileSystemStorag
 
   private suspend fun searchFile(uuid: UUID): FilePointer {
     val folderPath = rootLocation.resolve(uuid.toString()).resolve("*")
-    println(folderPath)
     for (i in 1..pollingRetries) {
       log.info("[Try $i][$uuid] Searching file")
-      val resource = fileSystemStorageLoader.getResource(folderPath)
+      val resource = fileSystemStorageLoader.getResource(folderPath.parent)
       if (resource.exists()) {
         log.info("[Try $i][$uuid] Found folder")
         val resources = fileSystemStorageLoader.getResources(folderPath)

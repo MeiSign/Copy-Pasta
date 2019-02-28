@@ -46,7 +46,7 @@ internal class FileSystemStorageTest {
     given(resourceLoader.getResource(any())).willReturn(resource)
     given(resourceLoader.getResource(any()).exists()).willReturn(true)
     given(resource.outputStream).willReturn(outputStream)
-    val pointer = service.storeFile(file)
+    val pointer = service.storeFile(file, UUID.randomUUID())
 
     verify(outputStream, times(1)).write("testContent".toByteArray().copyOf(DEFAULT_BUFFER_SIZE), 0, 11)
     assertThat(pointer.key, Matchers.`is`("original"))

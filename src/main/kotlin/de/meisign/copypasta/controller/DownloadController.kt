@@ -29,7 +29,6 @@ class DownloadController(@Autowired private val storage: FileStorage) {
 
     try {
       val resource = storage.downloadFile(FilePointer(uuid, name))
-
       return serveFile(resource, name)
     } catch (e: IOException) {
       log.error("Storage Exception while opening input stream", e)

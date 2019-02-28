@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-class Upload extends Component {
+class DesktopUpload extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -49,4 +49,4 @@ class Upload extends Component {
   }
 }
 
-export default Upload;
+export default DesktopUpload;
