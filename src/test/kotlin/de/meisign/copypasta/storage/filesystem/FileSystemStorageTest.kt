@@ -71,7 +71,7 @@ internal class FileSystemStorageTest {
     assertThrows<FileNotFoundException> {
       runBlocking { service.awaitDownloadAsync(uuid).await() }
     }
-    verify(resourceLoader, times(pollingRetries)).getResource(Paths.get("upload-dir", uuid.toString(), "*"))
+    verify(resourceLoader, times(pollingRetries)).getResource(Paths.get("upload-dir", uuid.toString()))
   }
 
   @Test
@@ -84,7 +84,7 @@ internal class FileSystemStorageTest {
 
 
     assertThat(runBlocking { service.awaitDownloadAsync(uuid).await() }, Matchers.`is`(FilePointer(uuid, "fileName.jpg")))
-    verify(resourceLoader, times(1)).getResource(Paths.get("upload-dir", uuid.toString(), "*"))
+    verify(resourceLoader, times(1)).getResource(Paths.get("upload-dir", uuid.toString()))
   }
 
   private fun <T> any(): T {
