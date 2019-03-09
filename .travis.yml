@@ -1,4 +1,14 @@
 language: java
+
+services:
+  - docker
+
+python:
+  - "3.6"
+
+before_install:
+  - "sudo apt-get purge python2.7"
+
 deploy:
   skip_cleanup: true
   provider: elasticbeanstalk
