@@ -1,68 +1,82 @@
 package de.meisign.copypasta.controller
 
-import de.meisign.copypasta.storage.FilePointer
-import de.meisign.copypasta.storage.FileStorage
+import cloud.localstack.docker.LocalstackDockerExtension
+import cloud.localstack.docker.annotation.LocalstackDockerProperties
+import de.meisign.copypasta.CopyPastaApplication
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.BDDMockito.given
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import java.util.*
 
 
-@ExtendWith(SpringExtension::class)
-@WebMvcTest(UploadController::class)
-class UploadControllerTest {
-  @Autowired
-  private val mvc: MockMvc? = null
+@ActiveProfiles(value = ["local", "test"])
+@ExtendWith(SpringExtension::class, LocalstackDockerExtension::class)
+@SpringBootTest(
+  webEnvironment =  SpringBootTest.WebEnvironment.MOCK,
+  classes = [CopyPastaApplication::class])
+@AutoConfigureMockMvc
+@LocalstackDockerProperties(services = ["s3"])
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+internal class UploadControllerTest(@Autowired private val mvc: MockMvc,
+                           @Autowired private val amazonS3: S3AsyncClient,
+                           @Value("\${aws.s3.bucketName}") private val bucketName: String) {
 
-  @MockBean
-  private val storage: FileStorage? = null
+  val fileUuid: UUID = UUID.randomUUID()
+  val fileContent = "fileContent"
+  val fileName = "fileName"
+  val file = MockMultipartFile("file", fileName, null, fileContent.toByteArray())
+
+  @BeforeAll
+  fun beforeAll() {
+    amazonS3
+      .createBucket(CreateBucketRequest.builder().bucket(bucketName).build())
+      .get()
+  }
 
   @Test
-  fun successfulUploadShouldReturnPointer() {
-    val file = MockMultipartFile("file", "orig", null, "bar".toByteArray())
-    val uuid: UUID = UUID.randomUUID()
-
-    given(storage?.storeFile(file, uuid)).willReturn(FilePointer(uuid, "key"))
-
-    mvc?.perform(MockMvcRequestBuilders.multipart("/upload?uuid={uuid}", uuid).file(file))
-        ?.andExpect(status().`is`(200))
-        ?.andExpect(content().string(
-            "{\"uuid\":\"${uuid}\",\"key\":\"key\"}")
-        )
+  fun successfulUploadWithUuidShouldReturnPointer() {
+    mvc
+      .perform(multipart("/upload?uuid={uuid}", fileUuid).file(file))
+      .andExpect(request().asyncStarted())
+      .andDo { result ->
+        mvc
+          .perform(asyncDispatch(result))
+          .andExpect(status().isOk)
+          .andExpect(content().json("{'uuid':'${fileUuid}','key':'$fileName'}")
+      )
+    }
   }
 
   @Test
   fun successfulUploadWithoutUuidShouldReturnPointer() {
-    val file = MockMultipartFile("file", "orig", null, "bar".toByteArray())
-    val uuid = UUID.randomUUID()
-
-    given(storage?.storeFile(eq(file), any())).willReturn(FilePointer(uuid, "key"))
-
-    mvc?.perform(MockMvcRequestBuilders.multipart("/upload", uuid).file(file))
-        ?.andExpect(status().`is`(200))
-        ?.andExpect(content().string(
-            "{\"uuid\":\"${uuid}\",\"key\":\"key\"}")
-        )
+    mvc
+      .perform(multipart("/upload", fileUuid).file(file))
+      .andExpect(request().asyncStarted())
+      .andDo { result ->
+        mvc.perform(asyncDispatch(result))
+          .andExpect(status().isOk)
+          .andExpect(content().json("{'key':'$fileName'}"))
+      }
   }
 
-  private fun <T> any(): T {
-    Mockito.any<T>()
-    return uninitialized()
-  }
-  private fun <T> uninitialized(): T = null as T
-
-  private fun <T> eq(t: T): T {
-    Mockito.eq<T>(t)
-    return uninitialized()
+  @Test
+  fun uploadWithoutFileShouldReturnBadRequest() {
+    mvc
+      .perform(multipart("/upload", fileUuid))
+      .andExpect(status().isBadRequest)
   }
 }

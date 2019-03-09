@@ -18,7 +18,8 @@ If you want to run the app locally without any AWS or internet dependency you ca
 
 `mvn spring-boot:run -Dspring.profiles.active=local`
 
-This will run the app and simulate download/upload by saving the files to the *upload-dir* in your project root.
+This will run the app with localstack to simuelate aws. 
+If you can't start the app with local profile, check the localstack [documentation and requirements](https://github.com/localstack/localstack#requirements). 
 
 ### Frontend Development
 If you want to run and change the frontend without restarting the backend 

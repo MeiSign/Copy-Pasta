@@ -1,96 +1,135 @@
 package de.meisign.copypasta.storage.s3
 
-import com.amazonaws.services.s3.AmazonS3
 import de.meisign.copypasta.storage.FileNotFoundException
 import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.FileStorage
 import de.meisign.copypasta.storage.StorageException
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.await
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
+import org.springframework.core.io.ByteArrayResource
 import org.springframework.core.io.Resource
-import org.springframework.core.io.ResourceLoader
-import org.springframework.core.io.WritableResource
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
+import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.core.async.AsyncResponseTransformer
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.*
+import java.lang.Exception
 import java.util.*
 
-@Profile("!local")
 @Component
-class S3Storage(@Autowired private val resourceLoader: ResourceLoader,
-                @Autowired private val amazonS3: AmazonS3,
-                @Value("\${s3.bucketName}") private val bucketName: String,
-                @Value("\${s3.pollingIntervalMs}") private val pollingInterval: Long,
-                @Value("\${s3.pollingRetries}") private val pollingRetries: Int
+class S3Storage(@Autowired private val amazonS3: S3AsyncClient,
+                @Value("\${aws.s3.bucketName}") private val bucketName: String,
+                @Value("\${aws.s3.pollingIntervalMs}") private val pollingInterval: Long,
+                @Value("\${aws.s3.pollingRetries}") private val pollingRetries: Int
 ) : FileStorage {
 
   private val log = LoggerFactory.getLogger(S3Storage::class.java)
 
-  fun getFileName(file: MultipartFile): String = file.originalFilename
-      ?: if (file.name.isEmpty()) "file" else file.name
+  internal fun getFileName(file: MultipartFile) =
+      file.originalFilename ?: if (file.name.isEmpty()) "file" else file.name
 
-  fun getS3Path(pointer: FilePointer) = "s3://$bucketName/${pointer.path()}"
-
-  override fun storeFile(file: MultipartFile, uuid: UUID): FilePointer {
+  override suspend fun storeFile(file: MultipartFile, uuid: UUID): FilePointer {
     val pointer = FilePointer(uuid, getFileName(file))
-    val resource = try {
-      resourceLoader.getResource(getS3Path(pointer)) as WritableResource
-    } catch (e: ClassCastException) {
-      fail(pointer, "Can't cast resource to writable Resource", e)
+    log.info("Storing file $pointer to s3")
+    try {
+      uploadFileToS3(file, pointer)
+      return pointer
+    } catch (e: Exception) {
+      log.error("[${pointer.path}] Could not upload file", e)
+      throw StorageException("Could not upload file")
     }
+  }
 
-    resource.outputStream.use { out ->
-      file.inputStream.use {
-        log.info("Storing file $pointer to s3")
-        it.copyTo(out)
+  private suspend fun uploadFileToS3(file: MultipartFile, pointer: FilePointer) {
+    file.inputStream.use {
+      amazonS3
+        .putObject(
+            buildS3PutObjectRequest(pointer),
+            AsyncRequestBody.fromBytes(it.readBytes())).await()
+    }
+  }
+
+  override suspend fun downloadFile(pointer: FilePointer): Resource {
+    log.info("[${pointer.path}] Downloading file from s3.")
+    try {
+      val file = downloadFileFromS3(pointer)
+      return ByteArrayResource(file)
+    } catch (e: NoSuchKeyException) {
+      log.info("[${pointer.path}] S3 File not found.")
+      throw FileNotFoundException("File with key ${pointer.key} does not exist.")
+    } catch (e: Exception) {
+      log.error("[${pointer.path}] Exception during download.", e)
+      throw StorageException("Could not download file.")
+    }
+  }
+
+  private suspend fun downloadFileFromS3(pointer: FilePointer): ByteArray {
+    return amazonS3
+        .getObject(
+            buildS3GetObjectRequest(pointer),
+            AsyncResponseTransformer.toBytes()
+        ).await().asByteArray()
+  }
+
+  override suspend fun awaitDownload(uuid: UUID): FilePointer {
+    log.info("[$uuid] Awaiting Download")
+    for (i in 1..pollingRetries) {
+      log.info("[Try $i][$uuid] Searching file")
+      try {
+        return searchS3File(uuid)
+      } catch (e: FileNotFoundException) {
+        delay(pollingInterval)
+      } catch (e: Exception) {
+        log.error("[$uuid] Could not await download", e)
+        throw StorageException("Could not await download")
       }
     }
+    throw FileNotFoundException()
 
-    return pointer
-  }
-
-  override fun downloadFile(pointer: FilePointer): Resource {
-    val resource = resourceLoader.getResource(getS3Path(pointer))
-    if (!resource.exists()) throw FileNotFoundException()
-
-    return resource
-  }
-
-  fun fail(pointer: FilePointer, message: String, e: Exception): Nothing {
-    log.error("Error: $message || FilePointer: $pointer", e)
-    throw StorageException()
-  }
-
-  override fun awaitDownloadAsync(uuid: UUID): Deferred<FilePointer> {
-    log.info("Awaiting Download with prefix $uuid")
-    return GlobalScope.async {
-      searchS3File(uuid)
-    }
   }
 
   private suspend fun searchS3File(uuid: UUID): FilePointer {
-    for (i in 1..pollingRetries) {
-      log.info("[Try $i][$uuid] Listing Bucket content")
-      val list = amazonS3.listObjects(bucketName, uuid.toString()).objectSummaries
-      if (list.size > 2) throw StorageException("Ambigious uuid. More than one file find.")
-      if (list.size >= 1) {
-        log.info("[Try $i][$uuid] Bucket folder and file found")
-        val key: String? = list.find { it.size != 0L }?.key
-        if (key == null) throw FileNotFoundException()
-        else {
-          val pointer = FilePointer(uuid, key.split("/").last())
-          log.info("[Try $i][$uuid] Returning pointer $pointer")
-          return pointer
-        }
-      }
-      delay(pollingInterval)
-    }
-    throw FileNotFoundException()
+     return amazonS3
+        .listObjects(buildS3ListObjectsRequest(uuid))
+        .thenApply { listObjResponse ->
+          val list = listObjResponse.contents()
+          when {
+            list.size > 1 -> throw StorageException("Ambigious uuid. More than one file find.")
+            list.size == 0 -> throw FileNotFoundException()
+            else -> {
+              val s3key = extractFileName(list.first(), uuid)
+              return@thenApply FilePointer(uuid, s3key)
+            }
+          }
+        }.await()
   }
 
+  internal fun extractFileName(s3Object: S3Object, uuid: UUID) =
+    s3Object.key().drop(uuid.toString().length + 1)
+
+  internal fun buildS3ListObjectsRequest(uuid: UUID): ListObjectsRequest =
+    ListObjectsRequest
+        .builder()
+        .bucket(bucketName)
+        .prefix(uuid.toString())
+        .build()
+
+  internal fun buildS3PutObjectRequest(pointer: FilePointer): PutObjectRequest =
+    PutObjectRequest
+        .builder()
+        .bucket(bucketName)
+        .key(pointer.path)
+        .build()
+
+  internal fun buildS3GetObjectRequest(pointer: FilePointer): GetObjectRequest =
+    GetObjectRequest
+        .builder()
+        .bucket(bucketName)
+        .key(pointer.path)
+        .build()
 }

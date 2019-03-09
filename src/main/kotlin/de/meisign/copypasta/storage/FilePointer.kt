@@ -4,5 +4,5 @@ import java.util.UUID
 
 
 data class FilePointer(val uuid: UUID, val key: String) {
-  fun path(): String = "$uuid/$key"
+  val path: String = "$uuid/$key"
 }

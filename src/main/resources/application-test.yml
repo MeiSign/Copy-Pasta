@@ -1,0 +1,5 @@
+aws.s3:
+  bucketName: copy-pasta-data
+  pollingIntervalMs: 50
+  pollingRetries: 3
+  endpoint: http://127.0.0.1:4572

@@ -4,6 +4,8 @@ import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.FileStorage
 import de.meisign.copypasta.storage.StorageException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.Resource
@@ -16,44 +18,36 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.context.request.async.DeferredResult
 import java.io.IOException
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 import java.util.*
 
 @RestController
 class DownloadController(@Autowired private val storage: FileStorage) {
 
   private val log = LoggerFactory.getLogger(DownloadController::class.java)
+  private val clock = Clock.system(ZoneId.of("Europe/Berlin"))
 
   @GetMapping("/download/{uuid}/{name}")
-  fun download(@PathVariable uuid: UUID, @PathVariable name: String): ResponseEntity<Resource> {
-    log.info("Downloading {}/{}", uuid.toString(), name)
-
-    try {
-      val resource = storage.downloadFile(FilePointer(uuid, name))
-      return serveFile(resource, name)
-    } catch (e: IOException) {
-      log.error("Storage Exception while opening input stream", e)
-      throw StorageException()
-    }
+  fun download(@PathVariable uuid: UUID, @PathVariable name: String): DeferredResult<ResponseEntity<Resource>> {
+    return GlobalScope.async {
+      try {
+        val resource = storage.downloadFile(FilePointer(uuid, name))
+        return@async serveFile(resource, name)
+      } catch (e: IOException) {
+        log.error("Storage Exception while opening input stream", e)
+        throw StorageException()
+      }
+    }.toDeferredResult()
   }
 
   @ExperimentalCoroutinesApi
   @GetMapping("/awaitDownload/{uuid}")
   fun awaitDownload(@PathVariable uuid: UUID): DeferredResult<FilePointer> {
-    val result = DeferredResult<FilePointer>()
-    val deferred = storage.awaitDownloadAsync(uuid)
-
-    result.onTimeout { deferred.cancel() }
-
-    deferred.invokeOnCompletion {
-      exception ->
-      if (exception != null) {
-        result.setErrorResult(exception)
-      } else {
-        result.setResult(deferred.getCompleted())
-      }
-    }
-
-    return result
+    return GlobalScope.async {
+      return@async storage.awaitDownload(uuid)
+    }.toDeferredResult()
   }
 
   @Throws(IOException::class)
@@ -66,7 +60,7 @@ class DownloadController(@Autowired private val storage: FileStorage) {
         .status(HttpStatus.OK)
         .headers(httpHeaders)
         .contentLength(resource.contentLength())
-        .lastModified(resource.lastModified())
+        .lastModified(Instant.now(clock))
         .body(resource)
   }
 }

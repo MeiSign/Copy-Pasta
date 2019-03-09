@@ -1,8 +1,5 @@
 package de.meisign.copypasta.storage.s3
 
-import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.ObjectListing
-import com.amazonaws.services.s3.model.S3ObjectSummary
 import de.meisign.copypasta.storage.FileNotFoundException
 import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.StorageException
@@ -12,114 +9,140 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
-import org.mockito.ArgumentMatchers
-import org.mockito.BDDMockito.*
-import org.mockito.Mockito.mock
-import org.springframework.context.support.ClassPathXmlApplicationContext
-import org.springframework.core.io.FileSystemResource
-import org.springframework.core.io.support.ResourcePatternResolver
+import org.mockito.BDDMockito.given
+import org.mockito.Mockito
+import org.mockito.Mockito.*
 import org.springframework.mock.web.MockMultipartFile
-import java.io.OutputStream
+import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.core.async.AsyncResponseTransformer
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.*
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 internal class S3StorageTest {
-  private val resourceLoader: ResourcePatternResolver = mock(ClassPathXmlApplicationContext::class.java)
-  private val resource = mock(FileSystemResource::class.java)
-  private val outputStream = mock(OutputStream::class.java)
-  private val amazonS3 = mock(AmazonS3Client::class.java)
+  private val amazonS3 = mock(S3AsyncClient::class.java)
   private val pollingRetries = 3
   private val bucketName = "bucketName"
+  private val service = S3Storage(amazonS3, bucketName, 10, pollingRetries)
 
-  private val service = S3Storage(resourceLoader, amazonS3, bucketName, 10, pollingRetries)
-
-  @Test
-  fun getFileNameReturnsOriginalNameIfDefined() {
-    val file = MockMultipartFile("name", "original", null, null)
-    assertThat(service.getFileName(file), `is`("original"))
-  }
+  private val uuid: UUID = UUID.randomUUID()
+  private val fileName = "fileName"
+  private val fileContent = "testContent"
+  private val file = MockMultipartFile("name", fileName , null, fileContent.toByteArray())
 
   @Test
-  fun getS3PathReturnsCorrectS3Uri() {
-    val pointer = FilePointer(UUID.fromString("31f9e985-72b8-4ca7-8a64-607cec211ecd"), "test.jpg")
-    assertThat(service.getS3Path(pointer), `is`("s3://bucketName/${pointer.uuid}/${pointer.key}"))
-  }
-
-  @Test
-  fun storeFileShouldCatchCastExceptions() {
-    val file = MockMultipartFile("name", "original", null, "testContent".toByteArray())
-    given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(null)
+  fun storeFileShouldCatchExceptions() {
+    val putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key("$uuid/$fileName").build()
+    val asyncRequestBody = AsyncRequestBody.fromBytes(fileContent.toByteArray())
+    given(amazonS3.putObject(putObjectRequest, asyncRequestBody)).willThrow(RuntimeException("aws broken"))
 
     assertThrows<StorageException> {
-      service.storeFile(file, UUID.randomUUID())
+      runBlocking {
+        return@runBlocking service.storeFile(file, uuid)
+      }
     }
   }
 
   @Test
-  fun storeFileShouldUploadFileAndReturnFilepointer() {
-    val file = MockMultipartFile("name", "original", null, "testContent".toByteArray())
-    given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(resource)
-    given(resource.outputStream).willReturn(outputStream)
-    val pointer = service.storeFile(file, UUID.randomUUID())
-
-    verify(outputStream, times(1)).write("testContent".toByteArray().copyOf(DEFAULT_BUFFER_SIZE), 0, 11)
-    assertThat(pointer.key, `is`("original"))
-  }
-
-  @Test
-  fun downloadFileShouldReturnResource() {
-    val pointer = FilePointer(UUID.randomUUID(), "key")
-    given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(resource)
-    given(resource.inputStream).willReturn("bla".byteInputStream())
-    given(resource.exists()).willReturn(true)
-
-    assertThat(service.downloadFile(pointer).inputStream.readBytes(), `is`("bla".toByteArray()))
-  }
-
-  @Test
-  fun downloadFileShouldThrowFileNotFoundIfFileDoesNotExist() {
-    val pointer = FilePointer(UUID.randomUUID(), "key")
-    given(resourceLoader.getResource(ArgumentMatchers.anyString())).willReturn(resource)
-    given(resource.inputStream).willReturn("bla".byteInputStream())
-    given(resource.exists()).willReturn(false)
+  fun downloadFileShouldCatchNoSuchKeyExceptions() {
+    given(amazonS3.getObject(any<GetObjectRequest>(), any<AsyncResponseTransformer<GetObjectResponse, GetObjectRequest>>())).willThrow(NoSuchKeyException.builder().build())
 
     assertThrows<FileNotFoundException> {
-      service.downloadFile(pointer).inputStream.readBytes()
+      runBlocking {
+        return@runBlocking service.downloadFile(FilePointer(uuid, fileName))
+      }
+    }
+  }
+
+  @Test
+  fun downloadFileShouldCatchOtherExceptions() {
+    given(amazonS3.getObject(any<GetObjectRequest>(), any<AsyncResponseTransformer<GetObjectResponse, GetObjectRequest>>())).willThrow(RuntimeException())
+
+    assertThrows<StorageException> {
+      runBlocking {
+        return@runBlocking service.downloadFile(FilePointer(uuid, fileName))
+      }
     }
   }
 
   @Test
   fun awaitDownloadShouldRetryIfItCantFindTheFolder() {
-    val uuid = UUID.randomUUID()
-    given(amazonS3.listObjects(bucketName, uuid.toString())).willReturn(ObjectListing())
+    given(amazonS3.listObjects(any<ListObjectsRequest>())).willReturn(CompletableFuture.completedFuture(ListObjectsResponse.builder().build()))
 
     assertThrows<FileNotFoundException> {
-      runBlocking { service.awaitDownloadAsync(uuid).await() }
+      runBlocking { service.awaitDownload(uuid) }
     }
-    verify(amazonS3, times(pollingRetries)).listObjects(bucketName, uuid.toString())
+    val listRequest = ListObjectsRequest.builder().bucket(bucketName).prefix(uuid.toString()).build()
+    verify(amazonS3, times(pollingRetries)).listObjects(listRequest)
   }
 
   @Test
-  fun awaitDownloadShouldReturnFilePointerForS3FolderAndFile() {
-    val uuid = UUID.randomUUID()
-    val folder = createObjectSummary(bucketName, uuid.toString(), 0L)
-    val file = createObjectSummary(bucketName, "fileName.jpg", 22L)
+  fun awaitDownloadShouldCatchExceptions() {
+    given(amazonS3.listObjects(any<ListObjectsRequest>())).willThrow(RuntimeException())
 
-    val objectListing = ObjectListing()
-    objectListing.objectSummaries.add(folder)
-    objectListing.objectSummaries.add(file)
-    given(amazonS3.listObjects(bucketName, uuid.toString())).willReturn(objectListing)
-
-    assertThat(runBlocking { service.awaitDownloadAsync(uuid).await() }, `is`(FilePointer(uuid, "fileName.jpg")))
-    verify(amazonS3, times(1)).listObjects(bucketName, uuid.toString())
+    assertThrows<StorageException> {
+      runBlocking { service.awaitDownload(uuid) }
+    }
   }
 
-  private fun createObjectSummary(bucketName: String, key: String, size: Long): S3ObjectSummary {
-    val file = S3ObjectSummary()
-    file.size = size
-    file.key = key
-    file.bucketName = bucketName
-
-    return file
+  @Test
+  fun getFileNameReturnsOriginalNameIfDefined() {
+    assertThat(service.getFileName(file), `is`(fileName))
   }
+
+  @Test
+  fun extractFileNameFromS3ObjectCorrectly() {
+    val name1 = service
+      .extractFileName(
+        S3Object.builder().key("$uuid/name/name.jpg").build(),
+        uuid)
+
+    val name2 = service
+      .extractFileName(
+        S3Object.builder().key("$uuid/name.jpg").build(),
+        uuid)
+
+    assertThat(name1, `is`("name/name.jpg"))
+    assertThat(name2, `is`("name.jpg"))
+  }
+
+  @Test
+  fun buildS3ListObjectsRequestsCorrectly() {
+    val request = service.buildS3ListObjectsRequest(uuid)
+
+    assertThat(request.bucket(), `is`(bucketName))
+    assertThat(request.prefix(), `is`("$uuid"))
+  }
+
+  @Test
+  fun buildS3PutObjectRequestCorrectly() {
+    val pointer = FilePointer(uuid, fileName)
+    val request = service.buildS3PutObjectRequest(pointer)
+
+    assertThat(request.bucket(), `is`(bucketName))
+    assertThat(request.key(), `is`(pointer.path))
+  }
+
+  @Test
+  fun buildS3GetObjectRequestCorrectly() {
+    val pointer = FilePointer(uuid, fileName)
+    val request = service.buildS3GetObjectRequest(pointer)
+
+    assertThat(request.bucket(), `is`(bucketName))
+    assertThat(request.key(), `is`(pointer.path))
+  }
+
+  private fun <T> any(): T {
+    Mockito.any<T>()
+    return uninitialized()
+  }
+
+  private fun <T> eq(t: T): T {
+    Mockito.eq<T>(t)
+    return uninitialized()
+  }
+  private fun <T> uninitialized(): T = null as T
+
 }
