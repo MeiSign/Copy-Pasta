@@ -23,7 +23,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import java.util.*
 
 
-@ActiveProfiles(value = ["local", "test"])
+@ActiveProfiles("test")
 @ExtendWith(SpringExtension::class, LocalstackDockerExtension::class)
 @SpringBootTest(
   webEnvironment =  SpringBootTest.WebEnvironment.MOCK,
