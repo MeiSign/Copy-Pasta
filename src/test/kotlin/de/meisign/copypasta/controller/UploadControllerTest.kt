@@ -29,7 +29,7 @@ import java.util.*
   webEnvironment =  SpringBootTest.WebEnvironment.MOCK,
   classes = [CopyPastaApplication::class])
 @AutoConfigureMockMvc
-@LocalstackDockerProperties(services = ["s3"])
+@LocalstackDockerProperties(services = ["s3"], pullNewImage = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class UploadControllerTest(@Autowired private val mvc: MockMvc,
                            @Autowired private val amazonS3: S3AsyncClient,
