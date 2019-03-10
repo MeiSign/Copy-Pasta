@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import * as Uuidv4 from 'uuid/v4';
 import QRCode from 'qrcode.react'
 
-class MobileUpload extends Component {
+class Receive extends Component {
   constructor(props) {
     super(props);
 
@@ -83,4 +83,4 @@ class MobileUpload extends Component {
   }
 }
 
-export default MobileUpload;
+export default Receive;

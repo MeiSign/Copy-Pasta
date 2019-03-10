@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import MobileUpload from './MobileUpload.js';
-import DesktopUpload from './DesktopUpload.js';
 import DirectionChooser from './DirectionChooser.js';
+import Send from './Send.js';
+import Receive from './Receive.js';
 import Download from './Download.js';
 import { Grid, Row, Col } from 'react-flexbox-grid';
 
@@ -39,12 +39,20 @@ class App extends Component {
     const direction = this.state.direction;
     const downloadPath = this.state.downloadPath;
     const uploadUuid = this.state.uploadUuid;
-    let download, desktopUpload, mobileUpload, directionChooser;
+    let download, send, receive, directionChooser;
 
-    if (direction === null) { directionChooser = <DirectionChooser onDirectionChosen={(direction) => this.handleDirectionChosen(direction)}/> }
-    if (direction === 'send') { desktopUpload = <DesktopUpload onUpload={(pointer) => this.handleDesktopUpload(pointer)} />}
-    if (direction === 'receive') { mobileUpload = <MobileUpload onAwaitDownload={(pointer) => this.handleAwaitDownload(pointer)} uploadUuid={uploadUuid} />}
-    if (downloadPath) { download = <Download downloadPath={downloadPath} /> }
+    if (direction === null && !uploadUuid) {
+      directionChooser = <DirectionChooser onDirectionChosen={(direction) => this.handleDirectionChosen(direction)}/>
+    } else if (direction === 'send') {
+      if (downloadPath) {
+        download = <Download downloadPath={downloadPath} />
+      } else {
+        send = <Send onUpload={(pointer) => this.handleDesktopUpload(pointer)} />
+      }
+    } else if (direction === 'receive' || uploadUuid) {
+      receive = <Receive onAwaitDownload={(pointer) => this.handleAwaitDownload(pointer)} uploadUuid={uploadUuid} />
+    }
+
     return (
       <Grid fluid>
         <Row>
@@ -59,8 +67,8 @@ class App extends Component {
         <Row className="App">
           <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={3} lg={6} className="Main Content">
             {directionChooser}
-            {desktopUpload}
-            {mobileUpload}
+            {send}
+            {receive}
             {download}
           </Col>
         </Row>

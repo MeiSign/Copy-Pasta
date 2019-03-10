@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-class DesktopUpload extends Component {
+class Send extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -49,4 +49,4 @@ class DesktopUpload extends Component {
   }
 }
 
-export default DesktopUpload;
+export default Send;

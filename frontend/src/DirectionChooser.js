@@ -31,8 +31,8 @@ class DirectionChooser extends Component {
     return (
       <Row>
         <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={1} lg={10}>
-          <DirectionButton icons={"Bla"} description={"Send to Mobile"} onClick={() => this.chooseDirection('send')} />
-          <DirectionButton icons={"Blubb"} description={"Receive from Mobile"} onClick={() => this.chooseDirection('receive')} />
+          <DirectionButton icons={"Send"} description={"Send"} onClick={() => this.chooseDirection('send')} />
+          <DirectionButton icons={"Receive"} description={"Receive"} onClick={() => this.chooseDirection('receive')} />
         </Col>
       </Row>
     );
