@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import * as Uuidv4 from 'uuid/v4';
-import QRCode from 'qrcode.react'
+import QRCode from 'qrcode.react';
+import { Row, Col } from 'react-flexbox-grid';
+import Measure from 'react-measure';
 
 class Receive extends Component {
   constructor(props) {
@@ -9,7 +11,11 @@ class Receive extends Component {
     this.state = {
       file: null,
       message: (this.props.uploadUuid) ? 'Upload your file and your desktop will be redirected to your download.' : 'Scan the qr code to upload your file' ,
-      newUuid: (!this.props.uploadUuid) ? Uuidv4() : undefined
+      newUuid: (!this.props.uploadUuid) ? Uuidv4() : undefined,
+      dimensions: {
+        width: -1,
+        height: -1,
+      }
     };
 
     this.awaitDownload();
@@ -62,6 +68,7 @@ class Receive extends Component {
     const message = this.state.message;
     const uuid = this.props.uploadUuid;
     const newUuid = this.state.newUuid;
+    const width = this.state.dimensions.width
 
     let uploadWidget;
     if (uuid) {
@@ -71,7 +78,24 @@ class Receive extends Component {
           <input type="submit" value="Upload"/>
         </form>
     } else {
-      uploadWidget = <QRCode value={window.location.origin + "?uuid=" + newUuid} bgColor="#C0E5C8" fgColor="#454545"/>
+      uploadWidget = <Row>
+        <Measure
+          bounds
+          onResize={contentRect => { this.setState({ dimensions: contentRect.bounds }) }}>
+
+          {({ measureRef }) => (
+            <Col xsOffset={2} xs={8} mdOffset={3} md={6} lgOffset={3} lg={6}>
+              <div ref={measureRef}>
+              <QRCode
+                value={window.location.origin + "?uuid=" + newUuid}
+                bgColor="#ECECEC"
+                fgColor="#000000"
+                size={width}/>
+              </div>
+            </Col>
+          )}
+        </Measure>
+      </Row>
     }
 
     return (

@@ -42,7 +42,8 @@ class App extends Component {
     let download, send, receive, directionChooser;
 
     if (direction === null && !uploadUuid) {
-      directionChooser = <DirectionChooser onDirectionChosen={(direction) => this.handleDirectionChosen(direction)}/>
+      directionChooser = <DirectionChooser
+        onDirectionChosen={(direction) => this.handleDirectionChosen(direction)}/>
     } else if (direction === 'send') {
       if (downloadPath) {
         download = <Download downloadPath={downloadPath} />
@@ -50,7 +51,9 @@ class App extends Component {
         send = <Send onUpload={(pointer) => this.handleDesktopUpload(pointer)} />
       }
     } else if (direction === 'receive' || uploadUuid) {
-      receive = <Receive onAwaitDownload={(pointer) => this.handleAwaitDownload(pointer)} uploadUuid={uploadUuid} />
+      receive = <Receive
+        onAwaitDownload={(pointer) => this.handleAwaitDownload(pointer)}
+        uploadUuid={uploadUuid} />
     }
 
     return (
