@@ -5,5 +5,5 @@ spring.http.multipart.enabled: false
 server.port: 5000
 aws.s3:
   bucketName: copy-pasta-data
-  pollingIntervalMs: 3000
-  pollingRetries: 20
+  pollingIntervalMs: 5000
+  pollingRetries: 18

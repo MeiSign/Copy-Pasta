@@ -29,6 +29,7 @@ class DownloadController(@Autowired private val storage: FileStorage) {
   private val log = LoggerFactory.getLogger(DownloadController::class.java)
   private val clock = Clock.system(ZoneId.of("Europe/Berlin"))
 
+  @ExperimentalCoroutinesApi
   @GetMapping("/download/{uuid}/{name}")
   fun download(@PathVariable uuid: UUID, @PathVariable name: String): DeferredResult<ResponseEntity<Resource>> {
     return GlobalScope.async {

@@ -2,6 +2,7 @@ package de.meisign.copypasta.controller
 
 import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.FileStorage
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,6 +16,7 @@ import java.util.*
 @RestController
 class UploadController(@Autowired private val storage: FileStorage) {
 
+  @ExperimentalCoroutinesApi
   @PostMapping("/upload")
   fun upload(@RequestParam("file") file: MultipartFile,
              @RequestParam("uuid", required = false) uuidParam: UUID?): DeferredResult<FilePointer> {
