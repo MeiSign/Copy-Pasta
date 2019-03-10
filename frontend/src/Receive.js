@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import * as Uuidv4 from 'uuid/v4';
-import { Row, Col } from 'react-flexbox-grid';
 import ResponsiveQrCode from './ResponsiveQrCode.js'
+import UploadForm from './UploadForm.js'
 
 class Receive extends Component {
   constructor(props) {
@@ -64,23 +64,11 @@ class Receive extends Component {
     const uuid = this.props.uploadUuid;
     const newUuid = this.state.newUuid;
 
-    let uploadWidget;
     if (uuid) {
-      uploadWidget =
-        <form encType="multipart/form-data" onSubmit={this.uploadFile.bind(this)}>
-          <input type="file" name="file" onChange={this.onFileChange.bind(this)} />
-          <input type="submit" value="Upload"/>
-        </form>
+      return <UploadForm onSubmit={this.uploadFile.bind(this)} onChange={this.onFileChange.bind(this)} message={message}/>;
     } else {
-      uploadWidget = <ResponsiveQrCode url={window.location.origin + "?uuid=" + newUuid}/>
+      return <ResponsiveQrCode url={window.location.origin + "?uuid=" + newUuid}/>;
     }
-
-    return (
-      <div>
-        <p>{message}</p>
-        {uploadWidget}
-      </div>
-    );
   }
 }
 

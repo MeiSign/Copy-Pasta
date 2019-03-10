@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import UploadForm from './UploadForm.js'
 
 class Send extends Component {
   constructor(props) {
@@ -38,13 +39,7 @@ class Send extends Component {
     const message = this.state.message;
 
     return (
-      <div>
-        <form encType="multipart/form-data" onSubmit={this.uploadFile.bind(this)}>
-          <input type="file" name="file" onChange={this.onFileChange.bind(this)} />
-          <input type="submit" value="Upload"/>
-        </form>
-        <p>{message}</p>
-      </div>
+      <UploadForm onSubmit={this.uploadFile.bind(this)} onChange={this.onFileChange.bind(this)} message={message}/>
     );
   }
 }
