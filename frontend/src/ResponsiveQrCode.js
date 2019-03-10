@@ -1,24 +1,23 @@
 import React, { Component } from 'react';
-import QRCode from 'qrcode.react'
+import QRCode from 'qrcode.react';
 import { Row, Col } from 'react-flexbox-grid';
-import Measure from 'react-measure'
+import Measure from 'react-measure';
 
-class Download extends Component {
+class ResponsiveQrCode extends Component {
   constructor(props) {
-      super(props);
+    super(props);
 
-      this.state = {
-        dimensions: {
-          width: -1,
-          height: -1,
-        }
-      };
-    }
-
+    this.state = {
+      dimensions: {
+        width: -1,
+        height: -1,
+      }
+    };
+  }
 
   render () {
-    const url = this.props.downloadPath;
-    const width = this.state.dimensions.width
+    const width = this.state.dimensions.width;
+    const url = this.props.url;
 
     return (
       <Row>
@@ -39,4 +38,4 @@ class Download extends Component {
   }
 }
 
-export default Download;
+export default ResponsiveQrCode;

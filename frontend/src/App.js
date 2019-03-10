@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import DirectionChooser from './DirectionChooser.js';
 import Send from './Send.js';
 import Receive from './Receive.js';
-import Download from './Download.js';
+import ResponsiveQrCode from './ResponsiveQrCode.js';
 import { Grid, Row, Col } from 'react-flexbox-grid';
 
 class App extends Component {
@@ -46,7 +46,7 @@ class App extends Component {
         onDirectionChosen={(direction) => this.handleDirectionChosen(direction)}/>
     } else if (direction === 'send') {
       if (downloadPath) {
-        download = <Download downloadPath={downloadPath} />
+        download = <ResponsiveQrCode url={downloadPath} />
       } else {
         send = <Send onUpload={(pointer) => this.handleDesktopUpload(pointer)} />
       }
