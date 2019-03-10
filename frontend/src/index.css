@@ -1,10 +1,28 @@
-body {
-  background: #F1FFFA;
-  color: #785964;
+
+.Content {
+  background: #ECECEC;
 }
 
-.App {
-  border: 1px solid #785964;
-  background: #C0E5C8;
+.Header {
+  border-radius: 15px 15px 0px 0px;
+}
+
+.Main {
+}
+
+.Footer {
+  border-radius: 0px 0px 15px 15px;
+}
+
+.Button {
+  border-radius: 5px 5px 5px 5px;
+  background: #C0D0C0;
+  margin-bottom: 10px;
+}
+
+.Button-Icons {
+}
+
+.Button-Description {
 }
 
