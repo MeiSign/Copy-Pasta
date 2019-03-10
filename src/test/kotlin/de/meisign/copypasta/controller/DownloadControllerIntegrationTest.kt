@@ -37,7 +37,7 @@ import java.util.*
 @AutoConfigureMockMvc
 @LocalstackDockerProperties(services = ["s3"], pullNewImage = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class DownloadControllerIT(@Autowired private val mvc: MockMvc,
+internal class DownloadControllerIntegrationTest(@Autowired private val mvc: MockMvc,
                                     @Autowired private val amazonS3: S3AsyncClient,
                                     @Value("\${aws.s3.bucketName}") private val bucketName: String) {
 

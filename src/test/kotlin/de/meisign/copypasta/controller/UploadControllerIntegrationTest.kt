@@ -31,9 +31,9 @@ import java.util.*
 @AutoConfigureMockMvc
 @LocalstackDockerProperties(services = ["s3"], pullNewImage = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class UploadControllerTest(@Autowired private val mvc: MockMvc,
-                           @Autowired private val amazonS3: S3AsyncClient,
-                           @Value("\${aws.s3.bucketName}") private val bucketName: String) {
+internal class UploadControllerIntegrationTest(@Autowired private val mvc: MockMvc,
+                                               @Autowired private val amazonS3: S3AsyncClient,
+                                               @Value("\${aws.s3.bucketName}") private val bucketName: String) {
 
   val fileUuid: UUID = UUID.randomUUID()
   val fileContent = "fileContent"
