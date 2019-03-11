@@ -4,6 +4,9 @@ import Send from './Send.js';
 import Receive from './Receive.js';
 import ResponsiveQrCode from './ResponsiveQrCode.js';
 import { Grid, Row, Col } from 'react-flexbox-grid';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+
 
 class App extends Component {
   constructor(props) {
@@ -12,27 +15,84 @@ class App extends Component {
     this.state = {
       downloadPath: null,
       direction: null,
-      uploadUuid: params.get("uuid")
+      uploadUuid: params.get("uuid"),
+      file: null,
+      message: '',
     };
   }
 
-  handleDesktopUpload(pointer) {
+  handleDesktopUpload = (pointer) => {
     const path = window.location.origin + "/download/" + pointer.uuid + "/" + pointer.key;
     this.setState({downloadPath: path});
   }
 
-  handleAwaitDownload(pointer) {
+  downloadReceived = (pointer) => {
     const path = window.location.origin + "/download/" + pointer.uuid + "/" + pointer.key;
     let a = document.createElement('a');
     a.href = path;
     a.click();
   }
 
+  handleAwaitDownload = (uuid) => {
+    fetch("awaitDownload/" + uuid, {
+      method: "GET"
+    }).then(res => {
+      if (res.ok) {
+        res.json().then(pointer => {
+          this.downloadReceived(pointer);
+        });
+      } else {
+        this.setState({message: "Upload not found."})
+      }
+    },
+    err => 'Upload failed: ' + err
+    )
+  }
+
   handleDirectionChosen = (direction) => {
-    console.log(direction + " to/from mobile")
     this.setState({
       direction: direction
     });
+  }
+
+  handleChange = (e) => {
+    const target = e.target;
+    const value = target.type === 'file' ? target.files[0] : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+
+  handleUploadFile = (e) => {
+    e.preventDefault();
+
+    const uploadUuid = this.state.uploadUuid;
+    const data = new FormData();
+    data.append('file', this.state.file);
+
+    let action;
+    if (uploadUuid) {
+      action = "upload?uuid=" + uploadUuid;
+    } else {
+      action = "upload";
+    }
+
+    fetch(action, {
+      method: "POST",
+      body: data
+    }).then(res => {
+      if (res.ok) {
+        res.json().then(pointer => {
+          this.setState({message: "Upload successful, scan the qr code to download."});
+          this.handleDesktopUpload(pointer);
+        });
+      } else {
+        this.setState({message: "Upload failed."})
+      }},
+      err => 'Upload failed: ' + err
+    )
   }
 
   render() {
@@ -48,11 +108,15 @@ class App extends Component {
       if (downloadPath) {
         download = <ResponsiveQrCode url={downloadPath} />
       } else {
-        send = <Send onUpload={(pointer) => this.handleDesktopUpload(pointer)} />
+        send = <Send
+          onUpload={(form) => this.handleUploadFile(form)}
+          onChange={(file) => this.handleChange(file)}/>
       }
     } else if (direction === 'receive' || uploadUuid) {
       receive = <Receive
         onAwaitDownload={(pointer) => this.handleAwaitDownload(pointer)}
+        onUpload={(e) => this.handleUploadFile(e)}
+        onChange={(e) => this.handleChange(e)}
         uploadUuid={uploadUuid} />
     }
 
@@ -62,7 +126,7 @@ class App extends Component {
           <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={3} lg={6} className="Header Content">
             <Row middle="xs">
               <Col xsOffset={1} xs={7} mdOffset={1} md={7} lgOffset={1} lg={7}>
-                <h1>Copy Pasta</h1>
+                <h1><FontAwesomeIcon icon={faCopy} /> Copy Pasta</h1>
               </Col>
               <Col xs={4} md={4} lg={4}>
                 <a href="https://github.com/MeiSign/Copy-Pasta" alt="Available on GitHub">
