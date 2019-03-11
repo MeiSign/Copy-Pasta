@@ -1,6 +1,13 @@
+body {
+  font-family: Helvetica;
+}
+
 
 .Content {
   background: #ECECEC;
+  border: 1px solid #DDDDDD;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .Header {
@@ -15,14 +22,34 @@
 }
 
 .Button {
+  cursor: pointer;
   border-radius: 5px 5px 5px 5px;
-  background: #C0D0C0;
+  background: #79E035;
   margin-bottom: 10px;
+  font-weight: 400;
+  padding: 5px;
+  border: 1px solid #47a508;
 }
 
+.Button:hover {
+  background: #5ED60E;
+}
+
+.Button:active {
+  background: #47a508;
+}
+
+
 .Button-Icons {
+  text-align: center;
+  font-weight: normal;
+}
+
+.Button-Icons svg {
+  margin-right: 5px;
 }
 
 .Button-Description {
+  text-align: center;
 }
 

@@ -1,14 +1,18 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'react-flexbox-grid';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFile, faArrowRight, faArrowLeft, faMobileAlt } from '@fortawesome/free-solid-svg-icons'
 
 class DirectionButton extends Component {
   render() {
+    const faIcons = this.props.icons;
+
     return (
       <Row className="Button" onClick={() => this.props.onClick()}>
         <Col xs={12} md={12} lg={12}>
           <Row className="Button-Icons">
             <Col xs={12} md={12} lg={12}>
-              {this.props.icons}
+              {faIcons.map((icon) => <FontAwesomeIcon key={icon.iconName} icon={icon} />)}
             </Col>
           </Row>
           <Row className="Button-Description">
@@ -31,8 +35,8 @@ class DirectionChooser extends Component {
     return (
       <Row>
         <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={1} lg={10}>
-          <DirectionButton icons={"Send"} description={"Send"} onClick={() => this.chooseDirection('send')} />
-          <DirectionButton icons={"Receive"} description={"Receive"} onClick={() => this.chooseDirection('receive')} />
+          <DirectionButton icons={[faFile, faArrowRight, faMobileAlt]} description={"Send to Mobile"} onClick={() => this.chooseDirection('send')} />
+          <DirectionButton icons={[faMobileAlt, faArrowLeft, faFile]} description={"Receive from Mobile"} onClick={() => this.chooseDirection('receive')} />
         </Col>
       </Row>
     );
