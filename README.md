@@ -1,5 +1,6 @@
 # Copy Pasta
 [![Build Status](https://travis-ci.org/MeiSign/Copy-Pasta.svg?branch=master)](https://travis-ci.org/MeiSign/Copy-Pasta)
+[![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
 This repository is first and foremost a fun project to find
 out what Kotlin has to offer. Apart from this purpose, the idea of

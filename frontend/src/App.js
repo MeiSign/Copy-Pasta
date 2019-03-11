@@ -60,9 +60,17 @@ class App extends Component {
       <Grid fluid>
         <Row>
           <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={3} lg={6} className="Header Content">
-            <Row>
-              <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={1} lg={10}>
+            <Row middle="xs">
+              <Col xsOffset={1} xs={7} mdOffset={1} md={7} lgOffset={1} lg={7}>
                 <h1>Copy Pasta</h1>
+              </Col>
+              <Col xs={4} md={4} lg={4}>
+                <a href="https://github.com/MeiSign/Copy-Pasta" alt="Available on GitHub">
+                  <img src="https://img.shields.io/github/license/MeiSign/Copy-Pasta.svg" alt="MIT License"/>
+                </a>
+                <a href="https://github.com/MeiSign/Copy-Pasta" alt="Available on GitHub">
+                  <img src="https://img.shields.io/github/stars/MeiSign/Copy-Pasta.svg?label=GitHub&style=social" alt="Follow on Github"/>
+                </a>
               </Col>
             </Row>
           </Col>
