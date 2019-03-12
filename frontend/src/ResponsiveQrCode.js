@@ -26,7 +26,7 @@ class ResponsiveQrCode extends Component {
           onResize={contentRect => { this.setState({ dimensions: contentRect.bounds }) }}>
 
           {({ measureRef }) => (
-            <Col xsOffset={2} xs={8} mdOffset={3} md={6} lgOffset={3} lg={6}>
+            <Col xsOffset={2} xs={8} mdOffset={4} md={4} lgOffset={4} lg={4}>
               <div ref={measureRef}>
               <QRCode value={url} bgColor="#ECECEC" fgColor="#000000" size={width}/>
               </div>

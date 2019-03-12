@@ -17,6 +17,9 @@ class App extends Component {
       direction: null,
       uploadUuid: params.get("uuid"),
       file: null,
+      fileName: 'No file selected',
+      fileSize: 0,
+      fileUnit: 'b',
       message: '',
     };
   }
@@ -55,13 +58,35 @@ class App extends Component {
     });
   }
 
+  setFileSize = (bytes) => {
+    if (bytes === 0) return
+    if ((bytes / 1024 / 1024) > 1) {
+      this.setState({
+        fileSize: (bytes / 1024 / 1024).toFixed(2),
+        fileUnit: 'mb'
+      })
+    } else if ((bytes / 1024) > 1) {
+      this.setState({
+        fileSize: (bytes / 1024).toFixed(2),
+        fileUnit: 'kb'
+      })
+    } else {
+      this.setState({
+        fileSize: bytes,
+        fileUnit: 'b'
+      })
+    }
+  }
+
   handleChange = (e) => {
     const target = e.target;
-    const value = target.type === 'file' ? target.files[0] : target.value;
+    const value = target.files[0];
     const name = target.name;
 
+    this.setFileSize(value.size)
     this.setState({
-      [name]: value
+      [name]: value,
+      fileName: value.name
     });
   }
 
@@ -109,11 +134,17 @@ class App extends Component {
         download = <ResponsiveQrCode url={downloadPath} />
       } else {
         send = <Send
+          fileName={this.state.fileName}
+          fileSize={this.state.fileSize}
+          fileUnit={this.state.fileUnit}
           onUpload={(form) => this.handleUploadFile(form)}
           onChange={(file) => this.handleChange(file)}/>
       }
     } else if (direction === 'receive' || uploadUuid) {
       receive = <Receive
+        fileName={this.state.fileName}
+        fileSize={this.state.fileSize}
+        fileUnit={this.state.fileUnit}
         onAwaitDownload={(pointer) => this.handleAwaitDownload(pointer)}
         onUpload={(e) => this.handleUploadFile(e)}
         onChange={(e) => this.handleChange(e)}
@@ -121,14 +152,14 @@ class App extends Component {
     }
 
     return (
-      <Grid fluid>
+      <Grid style={{height:100 + 'vh'}}>
         <Row>
-          <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={3} lg={6} className="Header Content">
+          <Col xs={12} md={12} lg={12} className="Header Content">
             <Row middle="xs">
-              <Col xsOffset={1} xs={7} mdOffset={1} md={7} lgOffset={1} lg={7}>
+              <Col xsOffset={1} xs={8} mdOffset={1} md={8} lgOffset={1} lg={8}>
                 <h1><FontAwesomeIcon icon={faCopy} /> Copy Pasta</h1>
               </Col>
-              <Col xs={4} md={4} lg={4}>
+              <Col xs={3} md={3} lg={3}>
                 <a href="https://github.com/MeiSign/Copy-Pasta" alt="Available on GitHub">
                   <img src="https://img.shields.io/github/license/MeiSign/Copy-Pasta.svg" alt="MIT License"/>
                 </a>
@@ -140,7 +171,7 @@ class App extends Component {
           </Col>
         </Row>
         <Row className="App">
-          <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={3} lg={6} className="Main Content">
+          <Col xs={12} md={12} lg={12} className="Main Content">
             {directionChooser}
             {send}
             {receive}
@@ -148,7 +179,7 @@ class App extends Component {
           </Col>
         </Row>
         <Row>
-          <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={3} lg={6} className="Footer Content">
+          <Col xs={12} md={12} lg={12} className="Footer Content">
             <Row>
               <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={1} lg={10}>
                 <button onClick={() => this.setState({direction: null})}>Back</button>

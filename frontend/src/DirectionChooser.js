@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'react-flexbox-grid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDesktop, faFile, faArrowRight, faArrowLeft, faMobileAlt } from '@fortawesome/free-solid-svg-icons'
+import { faDesktop, faArrowRight, faArrowLeft, faMobileAlt } from '@fortawesome/free-solid-svg-icons'
+import { faFile } from '@fortawesome/free-regular-svg-icons'
 
 class DirectionButton extends Component {
   render() {
@@ -10,14 +11,12 @@ class DirectionButton extends Component {
     return (
       <Row className="Button" onClick={() => this.props.onClick()}>
         <Col xs={12} md={12} lg={12}>
-          <Row className="Button-Icons">
-            <Col xs={12} md={12} lg={12}>
+          <Row className="Button-Label" center="xs" start="md">
+            <Col xsOffset={0} mdOffset={1} lgOffset={1}>
               {faIcons.map((icon, i) => <FontAwesomeIcon key={i} icon={icon} />)}
             </Col>
-          </Row>
-          <Row className="Button-Description">
-            <Col xs={12} md={12} lg={12}>
-              {this.props.description}
+            <Col>
+              <span>{this.props.description}</span>
             </Col>
           </Row>
         </Col>

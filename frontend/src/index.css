@@ -1,7 +1,7 @@
 body {
+  margin: 0px 0px;
   font-family: Helvetica;
 }
-
 
 .Content {
   background: #ECECEC;
@@ -9,7 +9,6 @@ body {
 }
 
 .Header {
-  border-radius: 15px 15px 0px 0px;
   background: #242623;
   border-top: 1px solid #DDDDDD;
   border-right: 1px solid #DDDDDD;
@@ -21,7 +20,8 @@ body {
 
 .Header h1 {
   color: #FFFFFF;
-  font-weight: 300;
+  font-size: 2.5em;
+  font-weight: 400;
   margin-bottom: 0.4em;
   margin-top: 0.3em;
 }
@@ -40,6 +40,7 @@ body {
   border-radius: 5px 5px 5px 5px;
   background: #85CE10;
   margin-bottom: 10px;
+  font-size: 1.5em;
   font-weight: 400;
   padding: 5px;
   box-shadow: 0px 0px 1px grey;
@@ -54,17 +55,53 @@ body {
   background: #47a508;
 }
 
-
-.Button-Icons {
-  text-align: center;
-  font-weight: normal;
+.Button-Label {
+  font-weight: 300;
+  font-size: 1.2em;
 }
 
-.Button-Icons svg {
-  margin-right: 5px;
+.Button-Label svg {
+  margin-right: 0.3em;
 }
 
-.Button-Description {
-  text-align: center;
+.Button-Label span {
+  margin-left: 0.6em;
 }
 
+.BrowseButton {
+  cursor: pointer;
+  background: #DDDDDD;
+  color: #404040;
+  margin-bottom: 10px;
+  font-size: 1em;
+  font-weight: 400;
+  padding: 5px;
+  box-shadow: 0px 0px 1px grey;
+}
+
+.BrowseButton:hover {
+  background: #808080;
+  color: #DDDDDD;
+  box-shadow: 1px 1px 5px grey;
+}
+
+.BrowseButton:active {
+  background: #DDDDDD;
+  color: #808080;
+}
+
+.BrowseButton-Label {
+  font-weight: 300;
+  font-size: 1.2em;
+}
+
+.FilePath {
+  font-size: 1.2em;
+  font-weight: 200;
+  border-bottom: 1px solid #DDDDDD;
+  color: #AAAAAA;
+}
+
+input {
+  display: none;
+}
