@@ -54,7 +54,7 @@ internal class DownloadControllerIntegrationTest(@Autowired private val mvc: Moc
     amazonS3.putObject(
         PutObjectRequest.builder().bucket(bucketName).key("$fileUuid/$fileName").build(),
         AsyncRequestBody.fromBytes(fileContent.toByteArray())
-    )
+    ).get()
   }
 
   @Test
