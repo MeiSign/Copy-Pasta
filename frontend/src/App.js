@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import DirectionChooser from './DirectionChooser.js';
 import Send from './Send.js';
 import Receive from './Receive.js';
+import Message from './Message.js';
 import ResponsiveQrCode from './ResponsiveQrCode.js';
 import { Grid, Row, Col } from 'react-flexbox-grid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -22,6 +23,20 @@ class App extends Component {
       fileUnit: 'b',
       message: '',
     };
+  }
+
+  resetState = () => {
+    let params = new URLSearchParams(window.location.search);
+    this.setState({
+      downloadPath: null,
+      direction: null,
+      uploadUuid: params.get("uuid"),
+      file: null,
+      fileName: 'No file selected',
+      fileSize: 0,
+      fileUnit: 'b',
+      messageText: '',
+    });
   }
 
   handleDesktopUpload = (pointer) => {
@@ -45,7 +60,7 @@ class App extends Component {
           this.downloadReceived(pointer);
         });
       } else {
-        this.setState({message: "Upload not found."})
+        this.setState({messageText: "Upload not found."})
       }
     },
     err => 'Upload failed: ' + err
@@ -53,7 +68,12 @@ class App extends Component {
   }
 
   handleDirectionChosen = (direction) => {
+    const messageText = direction === 'send' ?
+      'Please select the file you would like to upload.' :
+      'Scan the QR code with the device from which you would like to receive a file.';
+
     this.setState({
+      messageText: messageText,
       direction: direction
     });
   }
@@ -110,13 +130,17 @@ class App extends Component {
     }).then(res => {
       if (res.ok) {
         res.json().then(pointer => {
-          this.setState({message: "Upload successful, scan the qr code to download."});
+          this.setState({
+            messageText:
+              "Upload successful, you can now use your other device to scan the qr code and download the file."
+          });
           this.handleDesktopUpload(pointer);
         });
       } else {
-        this.setState({message: "Upload failed."})
+        this.setState({messageText: "Upload failed. Please try again later."});
       }},
-      err => 'Upload failed: ' + err
+      err =>
+        this.setState({messageText: "Upload failed. Please try again later."})
     )
   }
 
@@ -124,7 +148,12 @@ class App extends Component {
     const direction = this.state.direction;
     const downloadPath = this.state.downloadPath;
     const uploadUuid = this.state.uploadUuid;
-    let download, send, receive, directionChooser;
+    const messageText = this.state.messageText;
+    let download, send, receive, directionChooser, message;
+
+    if (messageText) {
+      message = <Message message={messageText} />;
+    }
 
     if (direction === null && !uploadUuid) {
       directionChooser = <DirectionChooser
@@ -157,7 +186,7 @@ class App extends Component {
           <Col xs={12} md={12} lg={12} className="Header Content">
             <Row middle="xs">
               <Col xsOffset={1} xs={8} mdOffset={1} md={8} lgOffset={1} lg={8}>
-                <h1><FontAwesomeIcon icon={faCopy} /> Copy Pasta</h1>
+                <h1><a href="/"><FontAwesomeIcon icon={faCopy} /> Copy Pasta</a></h1>
               </Col>
               <Col xs={3} md={3} lg={3}>
                 <a href="https://github.com/MeiSign/Copy-Pasta" alt="Available on GitHub">
@@ -172,6 +201,7 @@ class App extends Component {
         </Row>
         <Row className="App">
           <Col xs={12} md={12} lg={12} className="Main Content">
+            {message}
             {directionChooser}
             {send}
             {receive}
@@ -182,7 +212,7 @@ class App extends Component {
           <Col xs={12} md={12} lg={12} className="Footer Content">
             <Row>
               <Col xsOffset={1} xs={10} mdOffset={1} md={10} lgOffset={1} lg={10}>
-                <button onClick={() => this.setState({direction: null})}>Back</button>
+                <button onClick={this.resetState}>Back</button>
               </Col>
             </Row>
           </Col>
