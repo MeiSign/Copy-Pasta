@@ -3,6 +3,7 @@ import DirectionChooser from './DirectionChooser.js';
 import Send from './Send.js';
 import Receive from './Receive.js';
 import Message from './Message.js';
+import LoadingCircle from './LoadingCircle.js';
 import ResponsiveQrCode from './ResponsiveQrCode.js';
 import { Grid, Row, Col } from 'react-flexbox-grid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -22,6 +23,7 @@ class App extends Component {
       fileSize: 0,
       fileUnit: 'b',
       message: '',
+      loading: false
     };
   }
 
@@ -36,12 +38,16 @@ class App extends Component {
       fileSize: 0,
       fileUnit: 'b',
       messageText: '',
+      loading: false
     });
   }
 
   handleDesktopUpload = (pointer) => {
     const path = window.location.origin + "/download/" + pointer.uuid + "/" + pointer.key;
-    this.setState({downloadPath: path});
+    this.setState({
+      downloadPath: path,
+      loading: false
+    });
   }
 
   downloadReceived = (pointer) => {
@@ -113,6 +119,10 @@ class App extends Component {
   handleUploadFile = (e) => {
     e.preventDefault();
 
+    this.setState({
+      loading: true
+    });
+
     const uploadUuid = this.state.uploadUuid;
     const data = new FormData();
     data.append('file', this.state.file);
@@ -128,10 +138,10 @@ class App extends Component {
       method: "POST",
       body: data
     }).then(res => {
+      this.setState({loading: false});
       if (res.ok) {
         res.json().then(pointer => {
-          this.setState({
-            messageText:
+          this.setState({messageText:
               "Upload successful, you can now use your other device to scan the qr code and download the file."
           });
           this.handleDesktopUpload(pointer);
@@ -149,10 +159,15 @@ class App extends Component {
     const downloadPath = this.state.downloadPath;
     const uploadUuid = this.state.uploadUuid;
     const messageText = this.state.messageText;
-    let download, send, receive, directionChooser, message;
+    const loading = this.state.loading;
+    let download, send, receive, directionChooser, message, loadingCircle;
 
     if (messageText) {
       message = <Message message={messageText} />;
+    }
+
+    if (loading) {
+      loadingCircle = <LoadingCircle />;
     }
 
     if (direction === null && !uploadUuid) {
@@ -182,6 +197,7 @@ class App extends Component {
 
     return (
       <Grid style={{height:100 + 'vh'}}>
+        {loadingCircle}
         <Row>
           <Col xs={12} md={12} lg={12} className="Header Content">
             <Row middle="xs">

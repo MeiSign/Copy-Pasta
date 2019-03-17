@@ -110,3 +110,16 @@ h1 a, a:active, a:hover, a:visited {
 input {
   display: none;
 }
+
+.LoadingBox {
+  position:absolute;
+  top:30%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  color: white;
+  background: #000000;
+  opacity: .8;
+  z-index: 1000;
+  padding: 2em;
+  border-radius: 5px 5px 5px 5px;
+}
