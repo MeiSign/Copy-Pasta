@@ -196,7 +196,7 @@ class App extends Component {
     }
 
     return (
-      <Grid style={{height:100 + 'vh'}}>
+      <Grid>
         {loadingCircle}
         <Row>
           <Col xs={12} md={12} lg={12} className="Header Content">
