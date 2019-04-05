@@ -1,4 +1,4 @@
-package de.meisign.copypasta.controller
+package de.meisign.copypasta.util
 
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi

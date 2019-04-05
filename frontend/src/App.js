@@ -8,6 +8,7 @@ import ResponsiveQrCode from './ResponsiveQrCode.js';
 import { Grid, Row, Col } from 'react-flexbox-grid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { loadReCaptcha, ReCaptcha } from 'react-recaptcha-v3'
 
 
 class App extends Component {
@@ -23,8 +24,13 @@ class App extends Component {
       fileSize: 0,
       fileUnit: 'b',
       message: '',
-      loading: false
+      loading: false,
+      recaptchaToken: null
     };
+  }
+
+  componentDidMount = () => {
+    loadReCaptcha('6LdLhJwUAAAAAJjifofLlhKKx6Ij29tJv38h3PVX');
   }
 
   resetState = () => {
@@ -39,6 +45,12 @@ class App extends Component {
       fileUnit: 'b',
       messageText: '',
       loading: false
+    });
+  }
+
+  reCaptchaCallback = (recaptchaToken) => {
+    this.setState({
+      recaptchaToken: recaptchaToken
     });
   }
 
@@ -126,6 +138,7 @@ class App extends Component {
     const uploadUuid = this.state.uploadUuid;
     const data = new FormData();
     data.append('file', this.state.file);
+    data.append('recaptchaToken', this.state.recaptchaToken);
 
     let action;
     if (uploadUuid) {
@@ -197,6 +210,10 @@ class App extends Component {
 
     return (
       <Grid>
+        <ReCaptcha
+          sitekey="6LdLhJwUAAAAAJjifofLlhKKx6Ij29tJv38h3PVX"
+          action='upload'
+          verifyCallback={this.reCaptchaCallback} />
         {loadingCircle}
         <Row>
           <Col xs={12} md={12} lg={12} className="Header Content">

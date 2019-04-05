@@ -1,4 +1,4 @@
-package de.meisign.copypasta.controller
+package de.meisign.copypasta.upload
 
 import cloud.localstack.docker.LocalstackDockerExtension
 import cloud.localstack.docker.annotation.LocalstackDockerProperties
@@ -49,8 +49,12 @@ internal class UploadControllerIntegrationTest(@Autowired private val mvc: MockM
 
   @Test
   fun successfulUploadWithUuidShouldReturnPointer() {
+    val request = multipart("/upload?uuid={uuid}", fileUuid)
+      .file(file)
+      .param("recaptchaToken", "Token123")
+
     mvc
-      .perform(multipart("/upload?uuid={uuid}", fileUuid).file(file))
+      .perform(request)
       .andExpect(request().asyncStarted())
       .andDo { result ->
         mvc
@@ -63,8 +67,12 @@ internal class UploadControllerIntegrationTest(@Autowired private val mvc: MockM
 
   @Test
   fun successfulUploadWithoutUuidShouldReturnPointer() {
+    val request = multipart("/upload")
+      .file(file)
+      .param("recaptchaToken", "Token123")
+
     mvc
-      .perform(multipart("/upload", fileUuid).file(file))
+      .perform(request)
       .andExpect(request().asyncStarted())
       .andDo { result ->
         mvc.perform(asyncDispatch(result))
@@ -75,8 +83,21 @@ internal class UploadControllerIntegrationTest(@Autowired private val mvc: MockM
 
   @Test
   fun uploadWithoutFileShouldReturnBadRequest() {
+    val request = multipart("/upload")
+      .param("recaptchaToken", "Token123")
+
     mvc
-      .perform(multipart("/upload", fileUuid))
+      .perform(request)
+      .andExpect(status().isBadRequest)
+  }
+
+  @Test
+  fun uploadWithoutRecaptchaTokenShouldReturnBadRequest() {
+    val request = multipart("/upload")
+      .file(file)
+
+    mvc
+      .perform(request)
       .andExpect(status().isBadRequest)
   }
 }

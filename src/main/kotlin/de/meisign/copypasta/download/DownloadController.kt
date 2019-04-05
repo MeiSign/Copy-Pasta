@@ -1,5 +1,6 @@
-package de.meisign.copypasta.controller
+package de.meisign.copypasta.download
 
+import de.meisign.copypasta.util.toDeferredResult
 import de.meisign.copypasta.storage.FilePointer
 import de.meisign.copypasta.storage.FileStorage
 import de.meisign.copypasta.storage.StorageException

@@ -1,7 +1,7 @@
-package de.meisign.copypasta.controller
+package de.meisign.copypasta.upload
 
+import de.meisign.copypasta.util.toDeferredResult
 import de.meisign.copypasta.storage.FilePointer
-import de.meisign.copypasta.storage.FileStorage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -14,15 +14,15 @@ import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
 @RestController
-class UploadController(@Autowired private val storage: FileStorage) {
+class UploadController(@Autowired private val uploadService: UploadService) {
 
   @ExperimentalCoroutinesApi
   @PostMapping("/upload")
   fun upload(@RequestParam("file") file: MultipartFile,
+             @RequestParam("recaptchaToken") recaptchaToken: String,
              @RequestParam("uuid", required = false) uuidParam: UUID?): DeferredResult<FilePointer> {
     return GlobalScope.async {
-      val uuid = uuidParam ?: UUID.randomUUID()
-      return@async storage.storeFile(file, uuid)
+      return@async uploadService.upload(file, recaptchaToken, uuidParam)
     }.toDeferredResult()
   }
 }

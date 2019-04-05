@@ -1,4 +1,4 @@
-package de.meisign.copypasta.controller
+package de.meisign.copypasta.download
 
 import cloud.localstack.docker.LocalstackDockerExtension
 import cloud.localstack.docker.annotation.LocalstackDockerProperties
