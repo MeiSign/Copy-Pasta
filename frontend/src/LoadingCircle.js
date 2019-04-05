@@ -6,7 +6,7 @@ class LoadingCircle extends Component {
 
   render() {
     return (
-      <div class="LoadingBox">
+      <div className="LoadingBox">
         <p><FontAwesomeIcon icon={faCog} spin size="4x"/></p>
         Uploading
       </div>
