@@ -7,3 +7,8 @@ aws.s3:
   bucketName: copy-pasta-data
   pollingIntervalMs: 5000
   pollingRetries: 18
+
+recaptcha:
+  apiUrl: "https://www.google.com/recaptcha/api/siteverify"
+  secret: ${RECAPTCHA_SECRET}
+  scoreThreshold: 0.5

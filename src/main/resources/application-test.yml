@@ -3,3 +3,7 @@ aws.s3:
   pollingIntervalMs: 50
   pollingRetries: 3
   endpoint: http://127.0.0.1:4572
+
+recaptcha:
+  apiUrl: http://127.0.0.1:8089/recaptcha
+  secret: "secret"

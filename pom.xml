@@ -21,6 +21,7 @@
 		<frontend-plugin.version>1.7.5</frontend-plugin.version>
 		<aws-s3-sdk.version>2.5.24</aws-s3-sdk.version>
 		<localstack.version>0.1.19</localstack.version>
+		<wiremock.version>2.23.2</wiremock.version>
 	</properties>
 
 	<dependencies>
@@ -57,6 +58,11 @@
 			<artifactId>s3</artifactId>
 			<version>${aws-s3-sdk.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>cloud.localstack</groupId>
+			<artifactId>localstack-utils</artifactId>
+			<version>${localstack.version}</version>
+		</dependency>
 
 		<!--Test Dependencies-->
 		<dependency>
@@ -83,9 +89,10 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>cloud.localstack</groupId>
-			<artifactId>localstack-utils</artifactId>
-			<version>${localstack.version}</version>
+			<groupId>com.github.tomakehurst</groupId>
+			<artifactId>wiremock</artifactId>
+			<version>${wiremock.version}</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 

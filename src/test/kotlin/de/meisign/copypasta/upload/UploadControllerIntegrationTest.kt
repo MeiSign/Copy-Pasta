@@ -2,10 +2,11 @@ package de.meisign.copypasta.upload
 
 import cloud.localstack.docker.LocalstackDockerExtension
 import cloud.localstack.docker.annotation.LocalstackDockerProperties
+import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import de.meisign.copypasta.CopyPastaApplication
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -36,19 +37,57 @@ internal class UploadControllerIntegrationTest(@Autowired private val mvc: MockM
                                                @Value("\${aws.s3.bucketName}") private val bucketName: String) {
 
   val fileUuid: UUID = UUID.randomUUID()
-  val fileContent = "fileContent"
-  val fileName = "fileName"
+  private final val fileContent = "fileContent"
+  private final val fileName = "fileName"
   val file = MockMultipartFile("file", fileName, null, fileContent.toByteArray())
+  val wireMockServer: WireMockServer = WireMockServer(wireMockConfig().port(8089))
 
   @BeforeAll
   fun beforeAll() {
     amazonS3
       .createBucket(CreateBucketRequest.builder().bucket(bucketName).build())
       .get()
+
+    wireMockServer.start()
+  }
+
+  @BeforeEach
+  fun beforeEach() {
+    wireMockServer.resetAll()
+  }
+
+  @AfterAll
+  fun afterAll() {
+    wireMockServer.stop()
+  }
+
+  @Test
+  fun invalidRecaptchaResponseShouldReturn403() {
+    wireMockServer.stubFor(get(urlPathEqualTo("/recaptcha"))
+      .willReturn(
+        okJson("""{"success": false, "score":0.0, "error-codes":["timeout-or-duplicate"]}""")
+      )
+    )
+
+    val request = multipart("/upload?uuid={uuid}", fileUuid)
+      .file(file)
+      .param("recaptchaToken", "Token123")
+
+
+    mvc
+      .perform(request)
+      .andExpect(request().asyncStarted())
+      .andDo { result ->
+        mvc
+          .perform(asyncDispatch(result))
+          .andExpect(status().isForbidden)
+      }
   }
 
   @Test
   fun successfulUploadWithUuidShouldReturnPointer() {
+    givenValidRecaptchaResponse()
+
     val request = multipart("/upload?uuid={uuid}", fileUuid)
       .file(file)
       .param("recaptchaToken", "Token123")
@@ -60,13 +99,15 @@ internal class UploadControllerIntegrationTest(@Autowired private val mvc: MockM
         mvc
           .perform(asyncDispatch(result))
           .andExpect(status().isOk)
-          .andExpect(content().json("{'uuid':'${fileUuid}','key':'$fileName'}")
+          .andExpect(content().json("{'uuid':'$fileUuid','key':'$fileName'}")
       )
     }
   }
 
   @Test
   fun successfulUploadWithoutUuidShouldReturnPointer() {
+    givenValidRecaptchaResponse()
+
     val request = multipart("/upload")
       .file(file)
       .param("recaptchaToken", "Token123")
@@ -99,5 +140,14 @@ internal class UploadControllerIntegrationTest(@Autowired private val mvc: MockM
     mvc
       .perform(request)
       .andExpect(status().isBadRequest)
+  }
+
+  private fun givenValidRecaptchaResponse() {
+    wireMockServer.stubFor(
+      get(urlPathEqualTo("/recaptcha"))
+        .willReturn(
+          okJson("""{"success": true, "score":1.0}""")
+        )
+    )
   }
 }

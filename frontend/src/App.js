@@ -34,6 +34,7 @@ class App extends Component {
   }
 
   resetState = () => {
+    this.recaptcha.execute();
     let params = new URLSearchParams(window.location.search);
     this.setState({
       downloadPath: null,
@@ -211,6 +212,7 @@ class App extends Component {
     return (
       <Grid>
         <ReCaptcha
+          ref={ref => this.recaptcha = ref}
           sitekey="6LdLhJwUAAAAAJjifofLlhKKx6Ij29tJv38h3PVX"
           action='upload'
           verifyCallback={this.reCaptchaCallback} />
